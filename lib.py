@@ -46,7 +46,7 @@ import csv
 import scipy.stats as stats
 from sklearn.metrics import mean_squared_error
 
-
+# a Dict specifying parameters for a single experiment run
 default_experiment = {
     # these are the X and Y signal; their values should be "name.npy", where
     # `data/name.npy` is a scalar data signal saved with `np.save`, as done
@@ -103,20 +103,31 @@ default_experiment = {
     # color indicating the squared error of the corresponding reconstructed points vs the original signal
     "visualize_error": False,
 
+    # a Boolean specifying whether to visplay a visualization in the format Jun requested
     "visualize_jun": False,
+    # a Boolean specifying whether to highlight the bad_idxes outside the convex hull of the training set
     "visualize_bad_idxs": False,
+    # the timestep used in the generated data -- used for visualization
     "timestep": 0.01,
+    # the xlabel displayed on the graph
     "xlabel": "$X(t)$",
+    # the ylabel displayed on the graph
     "ylabel": "$Y(t)$",
+    # the axes limits for the top plot in a Jun visualization plot
     "ax0xlim": -25,
     "ax0ylim": 25,
+    # the axes limits for the middle and bottom plots in a Jun visualization plot
     "ax1xlim": -25,
     "ax1ylim": 75,
+    # whether to make the true target signal dotted
     "truetargetdotted": True,
+    # whether to save the noisy signal for later analysis
     "saveNoisy": False,
+    # whether to save the reconstruction for later analysis
     "saveRec": False,
 }
 
+# a Dict specifying which numbers should be returned from an experiment
 default_result = {
     # an integer specifying the number of nonempty cells in the reconstruction
     # works for both modes
@@ -155,7 +166,7 @@ def reconstruct_shadow(data, max_d, tau):
     return shadow
 
 
-def uniform(Xtrain, Xtest, Ytrain, boxes_per_dim, save_bincounts=False, interpolation="None", Ytest=[]):
+def uniform(Xtrain, Xtest, Ytrain, boxes_per_dim, save_bincounts=False, interpolation="None"):
     """
 
     This function can compute a reconstruction following the uniform grid approach.
@@ -164,9 +175,10 @@ def uniform(Xtrain, Xtest, Ytrain, boxes_per_dim, save_bincounts=False, interpol
         Xtrain: the points of the X signal on which to train the grid
         Xtest: the points of the X signal on which to reconstruct the corresponding Y signal
         Ytrain: the points of the Y signal that correspond to Xtrain
-        epsilon: the side length of the bins
+        boxes_per_dim: an integer specifying the number of boxes to use in each dimension
         save_bincounts: whether or not to save a txt file containing the counts of the trainingbins for use in plotting histograms
-        interpolatoin: whether or not to use linear interpolation (if yes, use the value "linear")
+        interpolation: whether or not to use linear interpolation (if yes, use the value "linear")
+        Ytest: 
 
     Returns:
         A dictionary containing the values:
@@ -183,6 +195,7 @@ def uniform(Xtrain, Xtest, Ytrain, boxes_per_dim, save_bincounts=False, interpol
     column_mins = Xtrain[:, 0:d].min(axis=0)
     column_maxs = Xtrain[:, 0:d].max(axis=0)
 
+    # number of boxes in each dimension is just copied for each dimension as of now
     dim_boxes = np.full(d, boxes_per_dim)
 
     trainingbins = {}
@@ -276,17 +289,6 @@ def uniform(Xtrain, Xtest, Ytrain, boxes_per_dim, save_bincounts=False, interpol
         sample, Yavg = zip(*sample)
         sample = list(sample)
         Yavg = list(Yavg)
-
-        # These lines were used to try to debug this interpolation.
-
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111, projection='3d')
-        # ax.scatter(*zip(*sample))
-        # ax.scatter(*zip(*Xtest), s=0.05)
-        # ax.set_xlabel('X Label')
-        # ax.set_ylabel('Y Label')
-        # ax.set_zlabel('Z Label')
-        # plt.show()
 
     # The "linear" and "delaunay" interpolation options were directly copied from the Voronoi code.
     # That section may have more comments if it is difficult to understand.
@@ -559,15 +561,12 @@ def demo(experiment):
             )
             print("kmeans time: ", time.time() - centertime)
 
-            #print(sample)
         else:
             # otherwise pick the subset randomly
             idx_sample = np.random.choice(
                 len(Xtrain), size=exp["subset_size"], replace=False
             )
             sample = Xtrain[idx_sample]
-
-            #print(sample)
 
         voronoi_results = voronoi(
             sample,
@@ -597,8 +596,6 @@ def demo(experiment):
         # We return this for use in comparing the two models.
         nonempty = uniform_results["nonempty"]
 
-    #print(sample)
-
     Ytest = Ytest.reshape((len(Ytest),))
     Yrec = Yrec.reshape((len(Yrec),))
 
@@ -614,8 +611,6 @@ def demo(experiment):
 
     ret = {"nonempty": nonempty, "time": end - start, "rmse": rmse, "pcc": pcc}
 
-
-    # times = 0:exp["timestep"]:(len(noisy)*exp["timestep"])
     times = np.arange(0, exp["testing_length"]*exp["timestep"], exp["timestep"])
 
     if exp["visualize_bad_idxs"]:
@@ -627,7 +622,6 @@ def demo(experiment):
         import matplotlib.pyplot as plt
         plt.style.use('default')
 
-        # fig, axs = plt.subplots(3, 1, sharey=True)
         fig, axs = plt.subplots(3, 1,figsize = (15,7))
         axs[0].tick_params(axis='y', which='major', pad=15)
         axs[1].tick_params(axis='y', which='major', pad=15)
@@ -669,20 +663,11 @@ def demo(experiment):
         axs[0].set_ylim(exp["ax0xlim"], exp["ax0ylim"])
         axs[1].set_ylim(exp["ax1xlim"], exp["ax1ylim"])
         axs[2].set_ylim(exp["ax1xlim"], exp["ax1ylim"])
-        # axs[1].set(ylim=(-50, 50))
-        # axs[1].yaxis.zoom(5)
-        # axs[2].get_shared_y_axes().join(axs[1], axs[2])
-        # axs[1].get_shared_y_axes().join(axs[0], axs[1])
-        # axs[2].get_shared_y_axes().join(axs[0], axs[2])
         plt.xlabel("Time Elapsed ($t$)",fontsize = 15)
         axs[0].set_xticklabels([])
         axs[1].set_xticklabels([])
         plt.subplots_adjust(wspace=0, hspace=0)
 
-
-
-        # add a big axis, hide frame
-       
         plt.show()
     
     if exp["saveNoisy"]:
@@ -703,23 +688,13 @@ def demo(experiment):
         ax.plot(times, Ytest[:et], zorder=1, alpha=0.85)
         if exp["visualize_bad_idxs"]:
             import copy
-            # tempx = np.copy(voronoi_results["bad_idxs"])
             tempx = np.array(bad_train_idxs, dtype=object)*exp["timestep"]
             tempx = copy.deepcopy(tempx)
 
-            # tempy = np.copy(Ytest[:et][voronoi_results["bad_idxs"]])
             tempy = np.array(Ytest[:et][bad_train_idxs], dtype=object)
             tempy = copy.deepcopy(tempy)
 
             ax.scatter(tempx, tempy, c="red", s=10, zorder=2)
-
-
-            # pos = np.where(np.abs(np.diff(tempy)) >= 0.5)[0]+1
-            # tempx = np.insert(tempx, pos, np.nan)
-            # tempy = np.insert(tempy, pos, np.nan)
-            # ax.plot(tempx, tempy, c="red", zorder=2, linewidth=5)
-
-            
 
         ax.set(xlabel="Time Elapsed $t$")
         ax.set(ylabel=exp["ylabel"])
@@ -730,11 +705,6 @@ def demo(experiment):
         plt.show()
 
     if exp["visualize_bad_idxs"]:
-        # points = Xtrain
-        # x1 = points[:, 0]
-        # y1 = points[:, 1]
-        # plt.plot(x1, y1, alpha=0.5, color="deepskyblue")
-
         
         points = Xtest
         x1 = points[:, 0]
