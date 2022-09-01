@@ -33,6 +33,7 @@ Note: As mentioned above, files should be run from this main directory, so you w
   - `clean_het_data.py`: a script that cleans the raw HET data. 
     - We run it as, for example, `python data_generation/clean_het_data.py raw/Cxx--2017_09_29--00041_Anode + Cathode current_(5e-03s_0_pts_avg).csv data/anode_cathode`.
     - We recommend placing the cleaned data files into `data/`. Each file should then contain a scalar signal for use in data analysis.
+  - `clean_all_het_data.py `: cleans all the HET data (which is not included in this public release) at once
   - `generate_attractor.py`: this script generates Lorenz data and places the results in the `data/` directory.
     - The parameters for the generated system can be modified in the file.
 - `data/`: The data generation/cleaning files will generate this directory when you run them. It should contain the scalar signals used in the experiments as `.npy` files.
