@@ -1,0 +1,17 @@
+Octave_Deconvolution/Data/
+Octave_Deconvolution/Fig/
+*~
+*.swp
+*.swo
+results.csv
+results.txt
+.ipynb_checkpoints/
+data/
+quick/results.csv
+nohup.out
+hist.*
+bin_counts.txt
+test.ipynb
+__pycache__
+noisy.npy
+rec.npy
